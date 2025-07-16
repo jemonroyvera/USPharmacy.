@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Gestión de Stock</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Se ha diseñado una aplicación de panel de control (dashboard) de una sola página con tres secciones principales navegables por pestañas: "Dashboard", "Plan de Acción" y "Contactos". Esta estructura se eligió porque el objetivo principal del informe es la gestión activa, no la lectura pasiva. El dashboard permite una visualización inmediata y la interacción con el estado del stock de cada producto. La sección "Plan de Acción" organiza la metodología y los próximos pasos de forma clara y accesible mediante acordeones. Esta arquitectura orientada a tareas facilita el seguimiento y la ejecución del plan, que es el propósito fundamental del documento original. -->
+    <!-- Visualization & Content Choices: 1) Resumen de Stock (Goal: Informar): Un gráfico de dona (Donut Chart) de Chart.js para mostrar la distribución del estado de los productos (OK, Bajo, Crítico), proporcionando una visión general instantánea. 2) Lista de Productos (Goal: Gestionar/Interactuar): Tarjetas interactivas para cada producto, generadas con JS. Cada tarjeta muestra el nombre, permite ingresar el stock actual y calcula dinámicamente los días restantes y el estado. La interacción es directa, actualizando el gráfico general en tiempo real. Esto convierte una lista estática en una herramienta de gestión. 3) Plan de Acción (Goal: Organizar): Se utiliza un componente de acordeón (HTML/CSS/JS) para presentar los "Acuerdos y Próximos Pasos" de manera estructurada y no abrumadora, permitiendo al usuario enfocarse en una sección a la vez. Se ha confirmado que no se utilizan gráficos SVG ni la librería Mermaid. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom-color: #3b82f6; color: #3b82f6; }
+        .tab-inactive { border-bottom-color: transparent; }
+        .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <header class="text-center mb-8">
+            <img src="data:image/png;base64,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" alt="Logo US Pharmacy Panamá" class="h-16 mx-auto mb-4">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">Plan de Trabajo: Gestión de Stock</h1>
+            <p class="text-md text-gray-600 mt-2">US Pharmacy & Equipo Médico – 16 de julio de 2025</p>
+        </header>
+
+        <div class="w-full max-w-5xl mx-auto bg-white rounded-xl shadow-lg">
+            <div class="border-b border-gray-200">
+                <nav class="flex space-x-4 px-4" aria-label="Tabs">
+                    <button id="tab-dashboard" class="tab-btn tab-active font-semibold py-4 px-2 text-sm transition-colors duration-200">
+                        📦 Productos Foco
+                    </button>
+                    <button id="tab-plan" class="tab-btn tab-inactive font-semibold py-4 px-2 text-sm text-gray-500 hover:text-blue-600 transition-colors duration-200">
+                        📋 Plan de Acción
+                    </button>
+                </nav>
+            </div>
+
+            <main>
+                <div id="content-dashboard" class="p-4 md:p-6">
+                    <div class="text-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Listado de Productos</h2>
+                        <p class="text-gray-500 mt-1">A continuación se muestra el portafolio de más de 40 referencias, organizado por categoría.</p>
+                    </div>
+                    <div id="product-list" class="space-y-8">
+                    </div>
+                </div>
+
+                <div id="content-plan" class="hidden p-4 md:p-6">
+                     <div class="text-left mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Objetivo y Acuerdos</h2>
+                        <p class="text-gray-500 mt-1">Detalles del plan, roles y próximos pasos para la colaboración.</p>
+                    </div>
+                    <div id="accordion-container" class="space-y-4">
+                        <div class="accordion-item border border-gray-200 rounded-lg">
+                            <button class="accordion-header w-full flex justify-between items-center text-left p-4 bg-gray-50 hover:bg-gray-100 focus:outline-none">
+                                <span class="font-semibold text-lg text-gray-700">🎯 Objetivo General</span>
+                                <span class="accordion-icon text-blue-500 transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content">
+                                <p class="p-4 border-t border-gray-200 text-gray-600">
+                                    Establecer un plan de trabajo colaborativo entre US Pharmacy, los jefes de servicio y la farmacia hospitalaria para optimizar la gestión de inventario de productos farmacéuticos clave. El objetivo es asegurar la disponibilidad continua, promover la rotación eficiente y maximizar el uso clínico adecuado, minimizando el riesgo de vencimientos o quiebres de stock.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="accordion-item border border-gray-200 rounded-lg">
+                            <button class="accordion-header w-full flex justify-between items-center text-left p-4 bg-gray-50 hover:bg-gray-100 focus:outline-none">
+                                <span class="font-semibold text-lg text-gray-700">✅ Acuerdos y Próximos Pasos</span>
+                                 <span class="accordion-icon text-blue-500 transform transition-transform duration-300">▼</span>
+                            </button>
+                            <div class="accordion-content">
+                               <div class="p-4 border-t border-gray-200 space-y-3">
+                                   <label class="flex items-center space-x-3 text-gray-700 cursor-pointer">
+                                       <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                       <span>Validación del Plan: Discutir y validar esta propuesta con los presentes.</span>
+                                   </label>
+                                    <label class="flex items-center space-x-3 text-gray-700 cursor-pointer">
+                                       <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                       <span>Reportar inclusión de nuevos productos.</span>
+                                   </label>
+                                   <label class="flex items-center space-x-3 text-gray-700 cursor-pointer">
+                                       <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                       <span>Definir Contactos: Establecer la lista de distribución para correos y el grupo de WhatsApp.</span>
+                                   </label>
+                                   <label class="flex items-center space-x-3 text-gray-700 cursor-pointer">
+                                       <input type="checkbox" class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                       <span>Fijar Fecha de Inicio: Acordar la fecha para la auditoría inicial y el primer reporte.</span>
+                                   </label>
+                               </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <footer class="text-center mt-8 text-sm text-gray-500">
+            <p>Panel de Control Interactivo &copy; 2025</p>
+        </footer>
+    </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const productData = [
+            { category: 'Antibióticos / Antiinfecciosos', name: 'KASINIV 50 mg polvo (caspofungina)', isFocus: true },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'KASINIV 70 mg polvo (caspofungina)', isFocus: true },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'MEDOROXIME 750 mg polvo (cefuroxima)', isFocus: true },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'CLAVOXILIN 1 g comprimidos (amoxicilina + ác. clavulánico)' },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'CLAVOXILIN 250 mg sol. oral' },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'CLAVOXILIN PLUS 600 mg polvo oral' },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'CLAVOXILIN PLUS 625 mg comprimidos' },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'MEROPREM 1 g polvo (meropenem)' },
+            { category: 'Antibióticos / Antiinfecciosos', name: 'PIPERAZAM 4 g/0.5 g polvo (piperacilina/tazobactam)' },
+            { category: 'Manejo del dolor / Analgesia', name: 'Paracetamol 500 mg sol. iny.' },
+            { category: 'Manejo del dolor / Analgesia', name: 'COMBOFUSIV (paracetamol 10 mg + ibuprofeno 3 mg ml-1)', isFocus: true },
+            { category: 'Manejo del dolor / Analgesia', name: 'Ibuprofeno 400 mg sol.-perfusión', isFocus: true },
+            { category: 'Manejo del dolor / Analgesia', name: 'Ibuprofeno 600 mg sol.-perfusión', isFocus: true },
+            { category: 'Manejo del dolor / Analgesia', name: 'Dexiren 25 mg (dexketoprofeno)' },
+            { category: 'Manejo del dolor / Analgesia', name: 'Sublimaze 0.05 mg ml-1 (fentanilo)' },
+            { category: 'Manejo del dolor / Analgesia', name: 'Metiom 40 mg (metamizol)' },
+            { category: 'Manejo del dolor / Analgesia', name: 'Profol 1 % (propofol)*¹' },
+            { category: 'Hematológicos / Inmunológicos', name: 'FLEBOGAMMA 5 % (inmunoglobulina humana)', isFocus: true },
+            { category: 'Hematológicos / Inmunológicos', name: 'Albumina 20 % 50 ml' },
+            { category: 'Hematológicos / Inmunológicos', name: 'Vernoxa 40 mg (rivaroxabán)' },
+            { category: 'Hematológicos / Inmunológicos', name: 'Vernoxa 60 mg (rivaroxabán)' },
+            { category: 'Fluidoterapia / Electrolitos & Nutrición parenteral', name: 'GELASPAN 4 % sol.-perfusión', isFocus: true },
+            { category: 'Fluidoterapia / Electrolitos & Nutrición parenteral', name: 'ISOFUNDIN 1 000 ml sol.-perfusión', isFocus: true },
+            { category: 'Fluidoterapia / Electrolitos & Nutrición parenteral', name: 'Cloruro de sodio 23.4 % amp.' },
+            { category: 'Fluidoterapia / Electrolitos & Nutrición parenteral', name: 'Aminoplasmal 10 % IV' },
+            { category: 'Cardiovasculares / Vasoactivos', name: 'Nicardipina 10 mg sol. iny.', isFocus: true },
+            { category: 'Cardiovasculares / Vasoactivos', name: 'Efedrina 3 mg ml-1 jeringa' },
+            { category: 'Cardiovasculares / Vasoactivos', name: 'Fenilefrina 50 µg ml-1 amp.' },
+            { category: 'Cardiovasculares / Vasoactivos', name: 'Atropina 0.2 mg ml-1 jeringa' },
+            { category: 'Sedación / Anestesia', name: 'Profol 1 % (propofol)*¹' },
+            { category: 'Sedación / Anestesia', name: 'Midazolam 1 mg ml-1 sol.-perfusión' },
+            { category: 'Gastroenterología / Metabolismo', name: 'Ondansetrón 0.16 mg ml-1 sol.-perfusión' },
+            { category: 'Gastroenterología / Metabolismo', name: 'Zurim 300 mg (alopurinol)' },
+            { category: 'Gastroenterología / Metabolismo', name: 'Lafelax 450 ml (lactulosa)' },
+            { category: 'Alergia y misceláneos', name: 'Nuralef 10 mg (loratadina)' },
+            { category: 'Alergia y misceláneos', name: 'Clavoxilin PLUS 400 mg suspensión (amoxicilina + ác. clavulánico)' }
+        ];
+
+        const productListContainer = document.getElementById('product-list');
+
+        const renderProducts = () => {
+            productListContainer.innerHTML = '';
+            const categories = [...new Set(productData.map(p => p.category))];
+
+            categories.forEach(category => {
+                const categoryWrapper = document.createElement('div');
+                
+                const categoryTitle = document.createElement('h3');
+                categoryTitle.className = 'text-xl font-semibold text-gray-800 border-b-2 border-blue-500 pb-2 mb-4';
+                categoryTitle.textContent = category;
+                categoryWrapper.appendChild(categoryTitle);
+
+                const productGrid = document.createElement('div');
+                productGrid.className = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4';
+                
+                productData.filter(p => p.category === category).forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white border border-gray-200 rounded-lg p-3 shadow-sm flex items-center justify-start h-20';
+                    
+                    let focusMark = p.isFocus ? '<span class="text-blue-500 font-bold mr-2">*</span>' : '';
+                    card.innerHTML = `<h4 class="font-medium text-gray-700 text-left">${focusMark}${p.name}</h4>`;
+                    productGrid.appendChild(card);
+                });
+
+                categoryWrapper.appendChild(productGrid);
+                productListContainer.appendChild(categoryWrapper);
+            });
+        };
+        
+        renderProducts();
+        
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = {
+            'tab-dashboard': document.getElementById('content-dashboard'),
+            'tab-plan': document.getElementById('content-plan')
+        };
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive', 'text-gray-500');
+                });
+                tab.classList.add('tab-active');
+                tab.classList.remove('tab-inactive', 'text-gray-500');
+                
+                Object.values(contents).forEach(c => c.classList.add('hidden'));
+                contents[tab.id].classList.remove('hidden');
+            });
+        });
+        
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.accordion-icon');
+                const isOpen = content.style.maxHeight;
+
+                document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                document.querySelectorAll('.accordion-icon').forEach(i => i.style.transform = '');
+
+                if (isOpen) {
+                    content.style.maxHeight = null;
+                    icon.style.transform = '';
+                } else {
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            });
+        });
+    });
+</script>
+
+</body>
+</html>
